@@ -196,3 +196,106 @@ To log out and revoke the token:
 ```
 
 This ends the session and invalidates both the token and its refresh token.
+
+---
+
+## Password Reset (Forgot Password)
+
+A code-based flow that lets a user who **cannot log in** reset their password. Unlike the rest of the
+API, these endpoints are **unauthenticated** — do **not** send an `Authorization` header.
+
+The flow has three steps:
+
+1. **Request** a one-time code, delivered by email.
+2. **Verify** the code to obtain a short-lived, single-use `verifiedToken`.
+3. **Complete** the reset by setting a new password with that token.
+
+### Step 1: Request a code
+
+#### POST `/api/v1/auth/password-reset/request`
+
+**Body:**
+```json
+{
+  "email": "user@example.com",
+  "language": "en_US"
+}
+```
+
+> `language` is optional and only selects the locale of the email template.
+
+**Response:** always a neutral `200`, whether or not the email matches an account (so the endpoint
+cannot be used to discover which addresses are registered):
+```json
+{
+  "summary": "If the email is registered, a code has been sent."
+}
+```
+
+| Status | Meaning |
+| --- | --- |
+| `200` | Request accepted (neutral — sent only if the account exists). |
+| `400` | `email` is missing or blank. |
+| `429` | Too many reset requests for this identifier — try again later. |
+
+### Step 2: Verify the code
+
+#### POST `/api/v1/auth/password-reset/verify`
+
+**Body:**
+```json
+{
+  "email": "user@example.com",
+  "code": "123456"
+}
+```
+
+**Response:**
+```json
+{
+  "verifiedToken": "3f9a0b7c..."
+}
+```
+
+| Status | Meaning |
+| --- | --- |
+| `200` | Code verified — returns the `verifiedToken` for Step 3. |
+| `400` | Missing fields, or an invalid/expired code, or too many attempts. |
+
+> The `400` response is uniform and does **not** reveal whether the email is registered.
+
+### Step 3: Set the new password
+
+#### POST `/api/v1/auth/password-reset/complete`
+
+**Body:**
+```json
+{
+  "verifiedToken": "3f9a0b7c...",
+  "newPassword": "MyNewPassw0rd!"
+}
+```
+
+**Response:**
+```json
+{
+  "summary": "Password updated successfully."
+}
+```
+
+| Status | Meaning |
+| --- | --- |
+| `200` | Password changed. The account's existing sessions are invalidated. |
+| `400` | Missing fields, an invalid/expired `verifiedToken`, or the new password violates the password policy. |
+
+:::warning Security
+
+- Responses are **neutral** so the flow cannot be used to enumerate accounts - an unknown email behaves
+  exactly like a registered one at every step.
+- Codes are **rate-limited** and **lock** after a configurable number of wrong attempts; requesting a new
+  code invalidates the previous one.
+- The `verifiedToken` is **single-use** and short-lived.
+
+The flow is tuned through the core `PASSWORD_RESET_*` System Configurator keys (documented with the
+core *Code-based password reset* feature), not through REST-specific SysConfig keys.
+:::
