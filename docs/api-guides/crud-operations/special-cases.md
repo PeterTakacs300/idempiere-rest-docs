@@ -27,3 +27,34 @@ When you are **creating or modifying values of an Image type column/field**, the
 - `data`: A string containing the base64-encoded image data.
 
 ---
+
+## doc-action
+
+**Type:** `string` (optional, request body field)
+
+**Used in:** `POST` (create) and `PUT` (update) requests to a model/table endpoint (e.g. `/api/v1/models/c_order/{id}`)
+
+**Description:**
+
+doc-action is a field you include in the JSON request body when creating or updating a document record (Order, Invoice, Payment, etc.) to trigger a document action - i.e. advance the document through its workflow/status lifecycle in the same request that saves the record. When creating or updating a record, you can add a field "doc-action" with the action you want to apply on the document.
+
+**Value:** The standard iDempiere DocAction status codes, for example:
+
+| Code | Action            |
+|------|-------------------|
+| PR   | Prepare           |
+| CO   | Complete          |
+| CL   | Close             |
+| VO   | Void              |
+| RE   | Re-activate       |
+
+NOTE: This list is incomplete, just for reference, the accepted values are the same values as the List for DocAction.
+
+**Example request body:**
+```json
+json
+{
+  "doc-action": "CO"
+}
+```
+sent as part of a `PUT` to complete a document (e.g. move it from Draft/In Progress to Completed).
