@@ -22,7 +22,7 @@ If transaction is `false`, each request is processed in its own transaction, so 
 
 An array of sub-request objects. Each object includes:
 
-- `method`: HTTP method `"POST"`, `"PUT"` or `"DEL"`
+- `method`: HTTP method `"POST"`, `"PUT"` or `"DELETE"`
 - `path`: Sub-request resource path, e.g. `"v1/models/C_Order"`
 - `body`: JSON body for the sub-request (if applicable)
 - `responseAlias`: Optional, unique alias to chain a later sub-request off this response — see [Chaining sub-requests](#chaining-sub-requests) below.
@@ -71,7 +71,7 @@ References only resolve inside `body`, not `path`, and the whole field value mus
 
 Give the earlier sub-request a `responseAlias`, unique within the batch. A later sub-request can then reference a value from its response using a JSONPath (RFC 9535) expression:
 
-```
+```text
 @alias$.jsonPathExpr@
 ```
 
